@@ -14,5 +14,5 @@ app.get('/', (req, res) => {
 app.use('/stt', sttRouter)
 
 app.listen(3003, () => {
-  console.log("server running on port 3000");
+  console.log("server running on port 3003");
 })
