@@ -57,7 +57,7 @@ async function generateText(req, res, next) {
     result = chatResponse.reduce((obj) => ('').concat(obj.text).concat(' '));
 
     console.log(result);
-    res.status(200).json({ text: text});
+    res.status(200).json({ text: result});
   } catch (error) {
     console.log(error);
     res.status(500).json({ err: "error"});

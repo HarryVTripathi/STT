@@ -16,7 +16,7 @@ async function getChatResponse(text) {
 
   const chatResponse = await makeRequest(options);
   console.log(chatResponse);
-  return chatResponse;
+  return chatResponse.body;
 }
 
 getChatResponse('hi');
