@@ -54,10 +54,11 @@ async function generateText(req, res, next) {
     console.log(text);
 
     const chatResponse = await getChatResponse(text);
-    result = chatResponse.reduce((obj) => ('').concat(obj.text).concat(' '));
+    console.log(chatResponse);
+    // result = chatResponse.reduce((obj) => ('').concat(obj.text).concat(' '));
 
-    console.log(result);
-    res.status(200).json({ text: result});
+    // console.log(result);
+    res.status(200).json({ text: chatResponse });
   } catch (error) {
     console.log(error);
     res.status(500).json({ err: "error"});
