@@ -14,7 +14,7 @@ async function getChatResponse(text) {
     method: 'post'
   };
 
-  let chatResponse
+  let chatResponse;
   try {
     chatResponse = await makeRequest(options);
     console.log(chatResponse);
@@ -23,8 +23,6 @@ async function getChatResponse(text) {
   }
   return chatResponse;
 }
-
-getChatResponse('hi');
 
 module.exports = {
   getChatResponse,
