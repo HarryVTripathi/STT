@@ -14,8 +14,14 @@ async function getChatResponse(text) {
     method: 'post'
   };
 
-  const chatResponse = await makeRequest(options);
-  return chatResponse.body;
+  let chatResponse
+  try {
+    chatResponse = await makeRequest(options);
+    console.log(chatResponse);
+  } catch (error) {
+    console.log(error);
+  }
+  return chatResponse;
 }
 
 getChatResponse('hi');

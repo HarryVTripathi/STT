@@ -48,20 +48,37 @@ async function generateText(req, res, next) {
   };
 
   try {
-    const { body: { results } } = await makeRequest(options);
+    const response = await makeRequest(options);
+    const { body: { results, error }, statusCode } = response;
+    let err;
+
+    console.log('sttResult: ', results);
+    if (statusCode > 299 || error) {
+      err = error || { code: 500, msg: 'INTERNAL_SERVER_ERROR' };
+      throw err;
+    }
+
     const alternatives = results[0].alternatives;
     const text = alternatives[0].transcript;
-    console.log(text);
+    console.log('text: ', text);
 
     const chatResponse = await getChatResponse(text);
-    console.log(chatResponse);
-    // result = chatResponse.reduce((obj) => ('').concat(obj.text).concat(' '));
+    
+    if (!(chatResponse && chatResponse.body && chatResponse.body.length)) {
+      err = {
+        code: 500,
+        msg: 'INTERNAL_SERVER_ERROR',
+        details: 'No response from RASA',
+      };
+      throw err;
+    }
 
-    // console.log(result);
-    res.status(200).json({ text: chatResponse });
+    result = chatResponse.reduce((obj) => ('').concat(obj.text).concat(' '));
+
+    res.status(200).json({ text: result });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ err: "error"});
+    res.status(error.code).json({ error });
   }
 }
 
