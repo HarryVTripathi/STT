@@ -16,6 +16,8 @@ function loadAudioV2(url) {
 }
 
 const getBase64 = async (url) => {
+  console.info('Getting base64 audio string...');
+  console.log('Audio URL: ', url);
   try {
     const result = await axios
       .get(url, { responseType: 'arraybuffer' })

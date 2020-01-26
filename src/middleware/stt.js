@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { makeRequest } = require('./makeRequest');
 const { getChatResponse } = require('./getChatResponse');
 const { getBase64 } = require('./loadAudio');
+const { tts } = require('./tts');
 const { URLs : { STT_URL, STT_BETA_URL } } = require('../constants');
 
 const router = Router();
@@ -51,6 +52,7 @@ async function getText(req, res, next) {
 }
 
 async function getTextFromBase64(req, res, next) {
+  console.info('Request received, retrieving audio');
   const { query: { RecordingUrl } } = req;
 
   try {
@@ -76,14 +78,32 @@ async function getTextFromBase64(req, res, next) {
       method: 'post',
     };
 
+    console.log('Getting text from base64 data...');
     const { body: { results, error }, statusCode } = await makeRequest(options);
 
-    if (statusCode > 299 || error) {
+    if (statusCode > 299 || error || !results.length) {
       err = error || { code: 500, msg: 'INTERNAL_SERVER_ERROR' };
       throw err;
     }
 
-    res.status(statusCode).json({ text: results });
+    const text = results[0].alternatives[0].transcript;
+    console.log('Speech to text: ', text);
+    const chatResponse = await getChatResponse(text);
+    
+    if (!(chatResponse && chatResponse.body && chatResponse.body.length)) {
+      err = {
+        code: 500,
+        msg: 'INTERNAL_SERVER_ERROR',
+        details: 'No response from RASA',
+      };
+      throw err;
+    }
+
+    const ans = chatResponse.body[0].text;
+    console.log('RASA chat response: ', ans);
+    await tts(ans);
+
+    res.status(statusCode).json({ chatBotAns: ans });
 
   } catch (error) {
     console.log(error);
