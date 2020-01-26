@@ -1,7 +1,8 @@
 const { Router } = require('express');
 const { makeRequest } = require('./makeRequest');
 const { getChatResponse } = require('./getChatResponse');
-const { URLs : { STT_URL } } = require('../constants');
+const { getBase64 } = require('./loadAudio');
+const { URLs : { STT_URL, STT_BETA_URL } } = require('../constants');
 
 const router = Router();
 const url = STT_URL;
@@ -11,31 +12,82 @@ async function getText(req, res, next) {
     'Content-Type': "application/json",
     'Authentication': "ya29.c.Kmq6BxOjtxVSMa04lRr_SgO_Sv8a19ka2WmyThNeonRMHZZuPs15kg1Sg1nV-jp9xJlUZ68UUrP9nnEDAOJNYMcPeXpSvKKLZ19p1GsU9YHCZFFTeeUO1auFolxUak9MYpBeesjNHQ1eUrKP"
   };
+
+  const { query: { RecordingUrl } } = req;
+  let encoding = RecordingUrl ? RecordingUrl.split('.').slice(-1)[0] : "FLAC";
+
+  if (encoding.toLowerCase() == "wav")
+    encoding = null;
+
+  console.log(RecordingUrl);
   
-  const body = {
+  const data = {
     config: {
-      encoding: "FLAC",
+      encoding,
       sampleRateHertz: 16000,
       languageCode: "en-US",
       enableWordTimeOffsets: false
     },
     audio: {
-      uri: "gs://cloud-samples-tests/speech/brooklyn.flac"
+      uri: RecordingUrl || "gs://cloud-samples-tests/speech/brooklyn.flac"
     }
   };
+
+  console.log(data);
   
   const options = {
     url,
-    body,
+    body: data,
     json: true,
     method: 'post',
   };
 
   try {
-    const { body } = await makeRequest(options);
-    res.status(200).json({ text: body});
+    const { body: text } = await makeRequest(options);
+    res.status(200).json({ text: text});
   } catch (error) {
     res.status(error.status).json({ err: "error"});
+  }
+}
+
+async function getTextFromBase64(req, res, next) {
+  const { query: { RecordingUrl } } = req;
+
+  try {
+    const { base64Data } = await getBase64(RecordingUrl);
+    let encoding = RecordingUrl ? RecordingUrl.split('.').slice(-1)[0] : "FLAC";
+
+    const data = {
+      config: {
+        encoding,
+        sampleRateHertz: 16000,
+        languageCode: "en-US",
+        enableWordTimeOffsets: false
+      },
+      audio: {
+        content: base64Data
+      }
+    };
+
+    const options = {
+      url: STT_BETA_URL,
+      body: data,
+      json: true,
+      method: 'post',
+    };
+
+    const { body: { results, error }, statusCode } = await makeRequest(options);
+
+    if (statusCode > 299 || error) {
+      err = error || { code: 500, msg: 'INTERNAL_SERVER_ERROR' };
+      throw err;
+    }
+
+    res.status(statusCode).json({ text: results });
+
+  } catch (error) {
+    console.log(error);
+    res.status(error.code).json({ error });
   }
 }
 
@@ -83,7 +135,7 @@ async function generateText(req, res, next) {
 }
 
 router.route('/')
-  .get(getText)
+  .get(getTextFromBase64)
   .post(generateText);
 
 module.exports = { sttRouter: router };
