@@ -71,12 +71,7 @@ async function getTextFromBase64(req, res, next) {
       }
     };
 
-    const options = {
-      url: STT_BETA_URL,
-      body: data,
-      json: true,
-      method: 'post',
-    };
+    const options = { url: STT_BETA_URL, body: data, json: true, method: 'post' };
 
     console.log('Getting text from base64 data...');
     const { body: { results, error }, statusCode } = await makeRequest(options);

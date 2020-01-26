@@ -1,6 +1,6 @@
 const { makeRequest } = require('./makeRequest');
 
-const url = 'http://localhost:3000/tts';
+const url = 'http://localhost:3006/tts';
 
 async function tts(ans, encoding) {
 
